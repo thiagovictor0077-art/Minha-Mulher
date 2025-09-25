@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Aniversário de Namoro</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      box-sizing: border-box;
+    }
+    html { scroll-behavior: smooth; }
+
+    /* Fundo romântico em gradiente */
+    .romantic-bg {
+      background: radial-gradient(1200px 800px at 10% 10%, rgba(255,255,255,0.25), transparent 60%),
+                  radial-gradient(1000px 700px at 90% 0%, rgba(255,255,255,0.2), transparent 55%),
+                  linear-gradient(135deg, #ff7aa2 0%, #ff5d8f 30%, #ff477e 60%, #ff2e63 100%);
+      min-height: 100vh;
+    }
+
+    /* Corações caindo ao fundo (decorativo) */
+    .falling-hearts {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .heart {
+      position: absolute;
+      font-size: 18px;
+      color: rgba(255,255,255,0.9);
+      filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+      animation-name: fall;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+      opacity: 0.8;
+    }
+    @keyframes fall {
+      0% { transform: translateY(-10%) translateX(0) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.9; }
+      100% { transform: translateY(110vh) translateX(40px) rotate(360deg); opacity: 0.9; }
+    }
+
+    /* Cartões / microinterações */
+    .card {
+      background: white;
+      border-radius: 1rem;
+      box-shadow:
+        0 10px 25px rgba(255, 64, 129, 0.15),
+        0 4px 10px rgba(255, 64, 129, 0.08);
+    }
+    .soft-hover { transition: transform 300ms ease, box-shadow 300ms ease, opacity 300ms ease; }
+    .soft-hover:hover {
+      transform: translateY(-3px);
+      box-shadow:
+        0 18px 35px rgba(255, 64, 129, 0.22),
+        0 6px 14px rgba(255, 64, 129, 0.10);
+    }
+
+    /* Galeria */
+    .gallery-img {
+      transition: transform 400ms ease, box-shadow 400ms ease, filter 400ms ease;
+      border-radius: 1rem;
+    }
+    .gallery-img:hover {
+      transform: translateY(-6px) scale(1.03) rotate(-0.5deg);
+      box-shadow:
+        0 16px 30px rgba(255, 64, 129, 0.25),
+        0 6px 14px rgba(255, 64, 129, 0.12);
+      filter: saturate(1.1);
+    }
+
+    /* Ícones da timeline */
+    .icon-circle {
+      background: linear-gradient(135deg, #ff8ab3, #ff2e63);
+      color: white;
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 9999px;
+      box-shadow: 0 6px 16px rgba(255, 46, 99, 0.32);
+      flex-shrink: 0;
+      font-size: 22px;
+    }
+
+    /* Abas */
+    .tab-active {
+      background: white;
+      color: #db2777;
+      border: 2px solid rgba(255,255,255,0.65);
+      box-shadow: 0 12px 20px rgba(255, 46, 99, 0.25);
+    }
+
+    /* Botão principal */
+    .btn-primary {
+      background: linear-gradient(135deg, #ff7aa2, #ff2e63);
+      color: white;
+      border-radius: 9999px;
+      padding: 0.75rem 1.25rem;
+      font-weight: 600;
+      transition: transform 200ms ease, box-shadow 200ms ease, opacity 200ms ease;
+      box-shadow: 0 10px 20px rgba(255, 46, 99, 0.28);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 14px 26px rgba(255, 46, 99, 0.36); opacity: 0.95; }
+
+    /* Canvas de corações (efeito ao clicar) */
+    #confettiCanvas {
+      position: fixed; inset: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: 40;
+    }
+
+    /* Tipografia */
+    .font-cursive { font-family: 'Great Vibes', cursive; }
+    .font-sans { font-family: 'Poppins', system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+
+    /* Revelar ao rolar */
+    .reveal { opacity: 0; transform: translateY(12px); transition: opacity 700ms ease, transform 700ms ease; }
+    .reveal.show { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body class="romantic-bg font-sans text-rose-900 antialiased relative overflow-x-hidden">
+  <!-- Corações caindo (decorativo) -->
+  <div class="falling-hearts" aria-hidden="true" id="heartsLayer"></div>
+
+  <!-- Canvas para corações (efeito ao clicar) -->
+  <canvas id="confettiCanvas"></canvas>
+
+  <main class="relative z-10">
+    <!-- HERO -->
+    <!-- Edite TÍTULO/SUBTÍTULO aqui -->
+    <section id="hero" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8 text-center text-white">
+      <h1 class="font-cursive text-5xl sm:text-6xl lg:text-7xl drop-shadow-md">
+        Nosso Primeiro Ano Juntos Meu Anjinho
+      </h1>
+      <p class="mt-3 sm:mt-4 text-lg sm:text-xl opacity-95">
+        Para meu anjinho 💖
+      </p>
+
+      <!-- Único botão: Soltar corações -->
+      <div class="mt-6 flex justify-center">
+        <button id="btnHearts" class="btn-primary" title="Soltar corações">
+          Soltar corações ❤️
+        </button>
+      </div>
+    </section>
+
+    <!-- CONTADOR + MENSAGEM -->
+    <section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="mt-10 grid gap-6 sm:grid-cols-2">
+        <!-- Bloco: Nosso tempo juntos -->
+        <div class="card p-6 soft-hover">
+          <h2 class="text-xl font-semibold text-rose-700">Nosso tempo juntos</h2>
+
+          <!-- Contadores calculados automaticamente a partir da data fixa abaixo -->
+          <p id="counterNice" class="mt-2 text-rose-800 text-lg">—</p>
+          <p id="counterDays" class="mt-1 text-rose-500 text-sm">—</p>
+
+          <!-- Data fixa (visível como texto, não editável) -->
+          <!-- Se quiser mudar a data no futuro, altere START_DATE_STR no script -->
+          <div class="mt-4 flex items-center gap-2">
+            <span class="text-rose-700 text-sm font-semibold">Início:</span>
+            <span class="text-rose-800 text-sm">25 09 2024</span>
+          </div>
+
+          <!-- Imagens logo abaixo da data (grid responsivo) -->
+          <!-- Troque as URLs abaixo se quiser -->
+          <div class="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <img class="w-full h-36 sm:h-40 object-cover rounded-lg"
+                 src="https://i.im.ge/2025/09/25/njb4fX.WhatsApp-Image-2025-09-25-at-01-36-47.jpeg"
+                 alt="Nós dois - lembrança 1"
+                 onerror="this.src=''; this.alt='Imagem falhou ao carregar'; this.style.display='none';">
+            <img class="w-full h-36 sm:h-40 object-cover rounded-lg"
+                 src="https://i.im.ge/2025/09/25/njbGr8.WhatsApp-Image-2025-09-25-at-01-38-44.jpeg"
+                 alt="Nós dois - lembrança 2"
+                 onerror="this.src=''; this.alt='Imagem falhou ao carregar'; this.style.display='none';">
+            <img class="w-full h-36 sm:h-40 object-cover rounded-lg"
+                 src="https://i.im.ge/2025/09/25/njcd8m.WhatsApp-Image-2025-09-25-at-02-16-18.jpeg"
+                 alt="Nós dois - lembrança 3"
+                 onerror="this.src=''; this.alt='Imagem falhou ao carregar'; this.style.display='none';">
+            <img class="w-full h-36 sm:h-40 object-cover rounded-lg"
+                 src="https://i.im.ge/2025/09/25/njc7x0.WhatsApp-Image-2025-09-25-at-02-17-01.jpeg"
+                 alt="Nós dois - lembrança 4"
+                 onerror="this.src=''; this.alt='Imagem falhou ao carregar'; this.style.display='none';">
+            <img class="w-full h-36 sm:h-40 object-cover rounded-lg"
+                 src="https://i.im.ge/2025/09/25/njcsQr.WhatsApp-Image-2025-09-25-at-02-17-25.jpeg"
+                 alt="Nós dois - lembrança 5"
+                 onerror="this.src=''; this.alt='Imagem falhou ao carregar'; this.style.display='none';">
+            <img class="w-full h-36 sm:h-40 object-cover rounded-lg"
+                 src="https://i.im.ge/2025/09/25/njcaIW.WhatsApp-Image-2025-09-25-at-02-15-54.jpeg"
+                 alt="Nós dois - lembrança 6"
+                 onerror="this.src=''; this.alt='Imagem falhou ao carregar'; this.style.display='none';">
+          </div>
+        </div>
+
+        <!-- Mensagem personalizada -->
+        <!-- Edite o TÍTULO e o TEXTO abaixo -->
+        <div class="card p-6 soft-hover">
+          <h2 class="text-xl font-semibold text-rose-700">Para o Amor da Minha Vida</h2>
+          <div class="mt-2 text-rose-800 space-y-3">
+            <p>Ah, meu amor... Não sei nem como começar isso. Só sei que estou escrevendo transbordando de felicidade e paixão.</p>
+            <p>Eu realmente não sei o que você fez comigo pra eu te amar tanto. Passei o dia inteiro pensando no começo do nosso namoro. Desde a primeira vez que te vi, com aqueles olhos castanhos lindos, eu senti algo diferente. E esse sentimento só foi crescendo cada vez mais.</p>
+            <p>Quando percebi que ia ser algo sério, o amor ficou ainda mais profundo e verdadeiro. Eu nunca tinha sentido isso por ninguém.</p>
+            <p>Não vejo a hora de te ver de novo, sentir o seu beijo, aquele seu abraço apertado e ver de perto aquele sorriso que me fez me apaixonar. Só você consegue me deixar feliz de verdade.</p>
+            <p>Eu sei que te amo. Sei disso pois  não conseguiria viver essa vida sem você ao meu lado. Só posso agradecer a Deus, porque foi Ele que nos uniu. Você é um milagre na minha vida.</p>
+            <p>Prometo valorizar você e cuidar de você pra sempre. Que a gente continue juntos, aprendendo um com o outro, evitando brigas e crescendo lado a lado.</p>
+            <p>Eu vou continuar te amando para sempre, meu anjinho. 🤍</p>
+            <p class="pt-2 text-rose-500">— Ass: Seu Gatinho</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABAS: Galeria / Nossas músicas -->
+    <section class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="mt-6 mb-2 flex flex-wrap gap-3">
+        <button id="tabGaleria" class="btn-primary tab-active">Galeria</button>
+        <button id="tabMusicas" class="btn-primary">Nossas músicas</button>
+      </div>
+    </section>
+
+    <!-- GALERIA -->
+    <!-- Substitua/adicione URLs nos blocos abaixo -->
+    <section id="galeria" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 reveal">
+      <div class="mb-6">
+        <h2 class="font-cursive text-4xl text-white drop-shadow">Nós e você</h2>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        <!-- 1 -->
+        <div class="relative group">
+          <img class="gallery-img w-full h-40 object-cover"
+               src="https://i.im.ge/2025/09/25/njbK0J.WhatsApp-Image-2025-09-25-at-00-09-34.jpeg"
+               alt="Nós e você - 1"
+               onerror="this.src=''; this.alt='Imagem falhou ao carregar'; this.style.display='none';">
+          <div class="absolute bottom-2 right-2 text-white text-xl">❤</div>
+        </div>
+        <!-- 2 -->
+        <div class="relative group">
+          <img class="gallery-img w-full h-40 object-cover"
+               src="https://i.im.ge/2025/09/25/njbZra.WhatsApp-Image-2025-08-31-at-13-26-43.jpeg"
+               alt="Nós e você - 2"
+               onerror="this.src=''; this.alt='Imagem falhou ao carregar'; this.style.display='none';">
+          <div class="absolute bottom-2 right-2 text-white text-xl">⭐</div>
+        </div>
+        <!-- 3 -->
+        <div class="relative group">
+          <img class="gallery-img w-full h-40 object-cover"
+               src="https://i.im.ge/2025/09/25/njb86G.WhatsApp-Image-2025-09-25-at-00-09-41.jpeg"
+               alt="Nós e você - 3"
+               onerror="this.src=''; this.alt='Imagem falhou ao carregar'; this.style.display='none';">
+          <div class="absolute bottom-2 right-2 text-white text-xl">❤</div>
+        </div>
+        <!-- 4 -->
+        <div class="relative group">
+          <img class="gallery-img w-full h-40 object-cover"
+               src="https://i.im.ge/2025/09/25/njbzDz.WhatsApp-Image-2025-08-26-at-20-14-56.jpeg"
+               alt="Nós e você - 4"
+               onerror="this.src=''; this.alt='Imagem falhou ao carregar'; this.style.display='none';">
+          <div class="absolute bottom-2 right-2 text-white text-xl">❤</div>
+        </div>
+        <!-- 5 -->
+        <div class="relative group">
+          <img class="gallery-img w-full h-40 object-cover"
+               src="https://i.im.ge/2025/09/25/njcTMY.WhatsApp-Image-2025-09-25-at-01-40-13.jpeg"
+               alt="Nós e você - 5"
+               onerror="this.src=''; this.alt='Imagem falhou ao carregar'; this.style.display='none';">
+          <div class="absolute bottom-2 right-2 text-white text-xl">⭐</div>
+        </div>
+        <!-- 6 -->
+        <div class="relative group">
+          <img class="gallery-img w-full h-40 object-cover"
+               src="https://i.im.ge/2025/09/25/njcoID.WhatsApp-Image-2025-09-25-at-01-44-40.jpeg"
+               alt="Nós e você - 6"
+               onerror="this.src=''; this.alt='Imagem falhou ao carregar'; this.style.display='none';">
+          <div class="absolute bottom-2 right-2 text-white text-xl">❤</div>
+        </div>
+        <!-- 7 -->
+        <div class="relative group">
+          <img class="gallery-img w-full h-40 object-cover"
+               src="https://i.im.ge/2025/09/25/njclJC.WhatsApp-Image-2025-09-25-at-01-42-08.jpeg"
+               alt="Nós e você - 7"
+               onerror="this.src=''; this.alt='Imagem falhou ao carregar'; this.style.display='none';">
+          <div class="absolute bottom-2 right-2 text-white text-xl">⭐</div>
+        </div>
+        <!-- 8 -->
+        <div class="relative group">
+          <img class="gallery-img w-full h-40 object-cover"
+               src="https://i.im.ge/2025/09/25/njcXE4.WhatsApp-Image-2025-09-25-at-01-41-28.jpeg"
+               alt="Nós e você - 8"
+               onerror="this.src=''; this.alt='Imagem falhou ao carregar'; this.style.display='none';">
+          <div class="absolute bottom-2 right-2 text-white text-xl">❤</div>
+        </div>
+        <!-- 9 -->
+        <div class="relative group">
+          <img class="gallery-img w-full h-40 object-cover"
+               src="https://i.im.ge/2025/09/25/njcudq.WhatsApp-Image-2025-09-25-at-01-41-06.jpeg"
+               alt="Nós e você - 9"
+               onerror="this.src=''; this.alt='Imagem falhou ao carregar'; this.style.display='none';">
+          <div class="absolute bottom-2 right-2 text-white text-xl">⭐</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MÚSICAS -->
+    <section id="musicas" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 reveal hidden">
+      <div class="mb-6">
+        <h2 class="font-cursive text-4xl text-white drop-shadow">Nossas músicas</h2>
+      </div>
+
+      <!-- Edite nomes/links das faixas aqui -->
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div class="card p-5 flex items-center justify-between soft-hover">
+          <div class="text-rose-800 font-semibold">Aliança</div>
+          <a class="btn-primary text-sm" target="_blank" rel="noopener noreferrer" href="https://youtu.be/ajP9NuVM3QY?si=S3ujg0Ms2Yl37_dN">Ouvir 🎧</a>
+        </div>
+        <div class="card p-5 flex items-center justify-between soft-hover">
+          <div class="text-rose-800 font-semibold">Ainda Bem</div>
+          <a class="btn-primary text-sm" target="_blank" rel="noopener noreferrer" href="https://youtu.be/gA1nKo3q3t4?si=qzyYIs0DkW663lOa">Ouvir 🎧</a>
+        </div>
+        <div class="card p-5 flex items-center justify-between soft-hover">
+          <div class="text-rose-800 font-semibold">Depois</div>
+          <a class="btn-primary text-sm" target="_blank" rel="noopener noreferrer" href="https://youtu.be/-mAhw7zQ36s?si=RJSWMfHv8aRdG7GU">Ouvir 🎧</a>
+        </div>
+        <div class="card p-5 flex items-center justify-between soft-hover">
+          <div class="text-rose-800 font-semibold">Um Amor Puro</div>
+          <a class="btn-primary text-sm" target="_blank" rel="noopener noreferrer" href="https://youtu.be/U8nS--XLqMs?si=NABqp-OUkiVs-T53">Ouvir 🎧</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- TIMELINE -->
+    <!-- Edite títulos/descrições dos eventos abaixo -->
+    <section id="timeline" class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 reveal">
+      <div class="mb-6">
+        <h2 class="font-cursive text-4xl text-white drop-shadow">Nossa timeline</h2>
+      </div>
+
+      <div class="relative">
+        <div class="absolute left-5 sm:left-6 top-0 bottom-0 w-1 bg-white/30 rounded-full"></div>
+
+        <div class="space-y-6">
+          <div class="relative flex gap-4 items-start">
+            <div class="icon-circle mt-1">💘</div>
+            <div class="card p-5 flex-1">
+              <h3 class="text-rose-800 font-semibold">Amor à Primeira Vista</h3>
+              <p class="mt-2 text-rose-700">
+                Ainda me lembro de quando te vi pela primeira vez: tão linda, tão gentil e tão quietinha... Mal sabia eu o que aquela garotinha perfeita estava pensando (kakaka).
+                A melhor coisa que eu já fiz foi mandar aquela mensagem nos meus recados... e também o meu único arrependimento foi não ter te conhecido antes.
+              </p>
+            </div>
+          </div>
+
+          <div class="relative flex gap-4 items-start">
+            <div class="icon-circle mt-1">💬</div>
+            <div class="card p-5 flex-1">
+              <h3 class="text-rose-800 font-semibold">Nossa Primeira Conversa</h3>
+              <p class="mt-2 text-rose-700">
+                Quando finalmente começamos a conversar, foi algo tão novo e tão perfeito pra mim, você tinha tudo, absolutamente tudo o que eu sempre quis.
+                Desde os gostos musicais até a sua personalidade. Foi ali que eu senti: você seria a mulher da minha vida.
+              </p>
+            </div>
+          </div>
+
+          <div class="relative flex gap-4 items-start">
+            <div class="icon-circle mt-1">🤭</div>
+            <div class="card p-5 flex-1">
+              <h3 class="text-rose-800 font-semibold">Nosso Primeiro Encontro</h3>
+              <div class="mt-2 text-rose-700 space-y-2">
+                <p>Pode parecer meio besta, mas até hoje me arrependo de ter te encontrado daquele jeito atrás de uma igreja (rs). Mas é uma ótima história pra contar pros nossos filhos.</p>
+                <p>A primeira coisa que fizemos foi nos abraçar e nos beijar, sem nem conversar direito (ksksk). Depois de sentir seus lábios macios, eu só fiquei cada vez mais atraído por você.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="relative flex gap-4 items-start">
+            <div class="icon-circle mt-1">💌</div>
+            <div class="card p-5 flex-1">
+              <h3 class="text-rose-800 font-semibold">Meu Primeiro “Eu Te Amo”</h3>
+              <p class="mt-2 text-rose-700">
+                Lembro como se fosse ontem. Eu estava nervoso demais, tinha que conversar com seus pais, mas no fundo eu sabia: se eu passasse por aquilo,
+                viveria uma vida inteira ao seu lado e isso realmente não tem preço. Fui lá, enfrentei tudo, segurei a sua mão e finalmente disse que te amava.
+              </p>
+            </div>
+          </div>
+
+          <div class="relative flex gap-4 items-start">
+            <div class="icon-circle mt-1">🐇</div>
+            <div class="card p-5 flex-1">
+              <h3 class="text-rose-800 font-semibold">Nosso Primeiro Dia dos Namorados</h3>
+              <div class="mt-2 text-rose-700 space-y-2">
+                <p>Nossa... foi o dia mais perfeito da minha vida. Eu consegui economizar pra comprar os presentes, escrevi os bilhetes com carinho, só pra te ver feliz.</p>
+                <p>Você tinha comentado que queria um coelhinho, então eu comprei um branquinho como o nosso coração branco.</p>
+                <p>Ver o seu sorriso e sentir os seus abraços aqueceu meu coração. Mas nada aqueceu mais do que ler as suas cartas, que me encheram de felicidade.</p>
+                <p>Agora, estamos completando um ano juntos, e eu sinto que esse é só o começo de muitos outros aniversários.</p>
+                <p>Eu te amo demais, meu anjinho. 🤍</p>
+              </div>
+              <!-- Imagem especial do Dia dos Namorados -->
+              <div class="mt-4">
+                <img class="w-full max-w-sm mx-auto h-48 object-cover rounded-lg"
+                     src="https://i.im.ge/2025/09/25/njcS5f.WhatsApp-Image-2025-09-25-at-02-17-44.jpeg"
+                     alt="Nosso primeiro Dia dos Namorados"
+                     onerror="this.src=''; this.alt='Imagem falhou ao carregar'; this.style.display='none';">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RODAPÉ -->
+    <footer class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+      <div class="text-white/80 text-center text-sm">
+        Feito com ❤ por nós dois.
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    // ===== Corações caindo no fundo =====
+    (function createHearts() {
+      const layer = document.getElementById('heartsLayer');
+      const total = 24;
+      const emojis = ['❤','💖','💗','💘','💝','💞'];
+      for (let i = 0; i < total; i++) {
+        const span = document.createElement('span');
+        span.className = 'heart';
+        span.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        span.style.left = (Math.random() * 100) + 'vw';
+        span.style.animationDelay = (Math.random() * 6) + 's';
+        span.style.animationDuration = (8 + Math.random() * 8) + 's';
+        span.style.fontSize = (14 + Math.random() * 20) + 'px';
+        span.style.opacity = (0.55 + Math.random() * 0.4).toFixed(2);
+        layer.appendChild(span);
+      }
+    })();
+
+    // ===== Revelar ao rolar =====
+    const reveals = document.querySelectorAll('.reveal');
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (e.isIntersecting) {
+          e.target.classList.add('show');
+          io.unobserve(e.target);
+        }
+      }
+    }, { threshold: 0.15 });
+    reveals.forEach(el => io.observe(el));
+
+    // ===== Abas (Galeria / Músicas) =====
+    const tabGaleria = document.getElementById('tabGaleria');
+    const tabMusicas = document.getElementById('tabMusicas');
+    const secGaleria = document.getElementById('galeria');
+    const secMusicas = document.getElementById('musicas');
+    function setTab(active) {
+      const toGaleria = active === 'galeria';
+      secGaleria.classList.toggle('hidden', !toGaleria);
+      secMusicas.classList.toggle('hidden', toGaleria);
+      tabGaleria.classList.toggle('tab-active', toGaleria);
+      tabMusicas.classList.toggle('tab-active', !toGaleria);
+    }
+    tabGaleria.addEventListener('click', (e)=>{ e.preventDefault(); setTab('galeria'); });
+    tabMusicas.addEventListener('click', (e)=>{ e.preventDefault(); setTab('musicas'); });
+
+    // ===== Contador de tempo juntos (data fixa) =====
+    const START_DATE_STR = '2024-09-25'; // mude aqui se precisar
+    const counterNice = document.getElementById('counterNice');
+    const counterDays = document.getElementById('counterDays');
+
+    function daysInMonth(year, monthIndex) {
+      return new Date(year, monthIndex + 1, 0).getDate();
+    }
+    function diffYMD(start, end) {
+      let y = end.getFullYear() - start.getFullYear();
+      let m = end.getMonth() - start.getMonth();
+      let d = end.getDate() - start.getDate();
+      if (d < 0) {
+        m -= 1;
+        const prevMonthIndex = (end.getMonth() - 1 + 12) % 12;
+        const prevMonthYear  = prevMonthIndex === 11 ? end.getFullYear() - 1 : end.getFullYear();
+        d += daysInMonth(prevMonthYear, prevMonthIndex);
+      }
+      if (m < 0) { y -= 1; m += 12; }
+      return { years: y, months: m, days: d };
+    }
+    function totalDaysBetween(start, end) {
+      const ms = end - start;
+      return Math.floor(ms / (1000 * 60 * 60 * 24));
+    }
+    function updateCounter() {
+      const start = new Date(START_DATE_STR + 'T00:00:00');
+      const now = new Date();
+      const ymd = diffYMD(start, now);
+      const yearsLabel = ymd.years === 1 ? 'ano' : 'anos';
+      const monthsLabel = ymd.months === 1 ? 'mês' : 'meses';
+      const daysLabel = ymd.days === 1 ? 'dia' : 'dias';
+      counterNice.textContent = `${ymd.years} ${yearsLabel}, ${ymd.months} ${monthsLabel} e ${ymd.days} ${daysLabel} juntinhos.`;
+      const total = totalDaysBetween(start, now);
+      counterDays.textContent = `Total de ${total} dia${total !== 1 ? 's' : ''} de amor.`;
+    }
+    updateCounter();
+    // atualiza a cada hora para manter o total de dias correto se a página ficar aberta
+    setInterval(updateCounter, 60 * 60 * 1000);
+
+    // ===== Efeito "Soltar corações" (canvas) =====
+    const confettiCanvas = document.getElementById('confettiCanvas');
+    const ctx = confettiCanvas.getContext('2d');
+    function resizeCanvas() { confettiCanvas.width = window.innerWidth; confettiCanvas.height = window.innerHeight; }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function drawHeart(ctx, size) {
+      const s = size;
+      ctx.beginPath();
+      ctx.moveTo(0, -0.3 * s);
+      ctx.bezierCurveTo(0, -0.8 * s, -0.6 * s, -0.8 * s, -0.6 * s, -0.3 * s);
+      ctx.bezierCurveTo(-0.6 * s, 0.1 * s, -0.2 * s, 0.2 * s, 0, 0.45 * s);
+      ctx.bezierCurveTo(0.2 * s, 0.2 * s, 0.6 * s, 0.1 * s, 0.6 * s, -0.3 * s);
+      ctx.bezierCurveTo(0.6 * s, -0.8 * s, 0, -0.8 * s, 0, -0.3 * s);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function launchHearts() {
+      const colors = ['#ffffff', '#ffb3c7', '#ff7aa2', '#ff2e63', '#ffd1dc'];
+      const pieces = [];
+      const count = 120;
+      for (let i = 0; i < count; i++) {
+        pieces.push({
+          x: Math.random() * confettiCanvas.width,
+          y: -20 - Math.random() * 200,
+          size: 10 + Math.random() * 16,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          velocityX: -1.5 + Math.random() * 3,
+          velocityY: 1.8 + Math.random() * 3.5,
+          rotation: Math.random() * 360,
+          rotationSpeed: -4 + Math.random() * 8,
+          wobble: Math.random() * 1.2
+        });
+      }
+      let running = true;
+      const startTime = performance.now();
+
+      function draw() {
+        if (!running) return;
+        ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+
+        for (const p of pieces) {
+          p.x += p.velocityX + Math.sin((p.y + p.rotation) * 0.02) * p.wobble;
+          p.y += p.velocityY;
+          p.rotation += p.rotationSpeed;
+          p.velocityY += 0.03;
+          p.velocityX *= 0.997;
+
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate((p.rotation * Math.PI) / 180);
+          ctx.fillStyle = p.color;
+          drawHeart(ctx, p.size);
+          ctx.restore();
+        }
+
+        for (let i = pieces.length - 1; i >= 0; i--) {
+          if (pieces[i].y > confettiCanvas.height + 30) pieces.splice(i, 1);
+        }
+
+        const elapsed = performance.now() - startTime;
+        if (elapsed > 6000 || pieces.length === 0) {
+          running = false;
+          ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+          return;
+        }
+        requestAnimationFrame(draw);
+      }
+      draw();
+    }
+
+    document.getElementById('btnHearts').addEventListener('click', (e) => {
+      e.preventDefault();
+      launchHearts();
+    });
+  </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9848163a300e285e',t:'MTc1ODc3Nzc3OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
